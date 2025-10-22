@@ -740,16 +740,18 @@ Site.ready({ name: 'dungeons', type: 'simulator', requires: ['translations_monst
             let logs = [];
 
             let totalScore = 0;
+            let totalFreeNexts = 0;
 
             const batch = new WorkerBatch('dungeons');
 
             for (let i = 0; i < instances; i++) {
                 batch.add(
-                    ({ results: { score, healths }, logs: _logs }) => {
+                    ({ results: { score, healths, freeNexts }, logs: _logs }) => {
                         results.push(healths);
                         logs = logs.concat(_logs);
 
                         totalScore += score;
+                        totalFreeNexts += freeNexts;
                     },
                     {
                         players: playerInstances,
@@ -772,7 +774,7 @@ Site.ready({ name: 'dungeons', type: 'simulator', requires: ['translations_monst
                     finalResults[i] = healthsSum / instances;
                 }
 
-                showGraph(chart, dungeon, boss, totalScore, instances * iterations, _sortAsc(finalResults));
+                showGraph(chart, dungeon, boss, totalScore, instances * iterations, _sortAsc(finalResults), totalFreeNexts);
                 $('#winchart').removeClass('faded-out');
 
                 // Download logs
@@ -794,11 +796,16 @@ Site.ready({ name: 'dungeons', type: 'simulator', requires: ['translations_monst
         executeSimulation(instances, iterations, false);
     });
 
-    function showGraph (graph, dungeon, boss, score, tries, healths) {
+    function showGraph (graph, dungeon, boss, score, tries, healths, freeNexts) {
         graph.options.title.text = [
             `${ dungeon.id !== 201 && dungeon.shadow ? `${intl('dungeon_enemies.shadow')} ` : '' }${ dungeon.name }: ${ boss.name }`,
             intl('dungeons.graph.winrate', { rate: (100 * score / tries).toFixed(2), score: formatAsSpacedNumber(score, ' '), tries: formatAsSpacedNumber(tries, ' ') })
         ];
+
+        if ([203, 204].includes(dungeon.id)) {
+            //graph.options.title.text.push(intl('dungeons.graph.freeNexts', { rate: (100 * freeNexts / tries).toFixed(2), freeNexts: formatAsSpacedNumber(freeNexts, ' '), tries: formatAsSpacedNumber(tries, ' ') }));
+            graph.options.title.text.push(`Free: ${freeNexts}`);
+        }
 
         const experience = getDungeonExperience({ dungeon, boss });
         if (experience > 0) {

@@ -21,15 +21,17 @@ class DungeonSimulator extends SimulatorBase {
 
         let score = 0;
         let healths = [];
+        let freeNexts = 0;
 
         if (players.length === 1) {
             // Single-player battle
             SimulatorModel.initializeFighters(this.cache_players[0], this.cache_boss);
 
             for (let i = 0; i < iterations; i++) {
-                let { win, health } = this.battleSingle();
+                let { win, health, freeNext } = this.battleSingle();
     
                 score += win;
+                freeNexts += +freeNext;
                 healths.push(health);
             }
         } else {
@@ -76,7 +78,8 @@ class DungeonSimulator extends SimulatorBase {
         return {
             iterations: iterations,
             score: score,
-            healths: healths
+            healths: healths,
+            freeNexts : freeNexts
         };
     }
 
@@ -96,7 +99,8 @@ class DungeonSimulator extends SimulatorBase {
 
         return {
             win,
-            health: win ? 0 : this.cache_boss.Health / this.cache_boss.getHealth()
+            health: win ? 0 : this.cache_boss.Health / this.cache_boss.getHealth(),
+            freeNext: this.cache_players[0].Health / this.cache_players.getHealth() >= 0.9
         }
     }
 
@@ -125,7 +129,7 @@ class DungeonSimulator extends SimulatorBase {
         // Return result based on empty array
         return {
             win: (this.la.length > 0 ? this.la[0].Index : this.lb[0].Index) == 0,
-            health: Math.max(0, this.lb.length > 0 ? (this.lb[0].Health / this.lb[0].getHealth()) : 0)
+            health: Math.max(0, this.lb.length > 0 ? (this.lb[0].Health / this.lb[0].getHealth()) : 0),
         };
     }
 }
